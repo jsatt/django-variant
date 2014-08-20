@@ -1,0 +1,7 @@
+pip>=0.8.2
+South
+Django>=1.4
+mox
+nose
+django-nose
+fabric
