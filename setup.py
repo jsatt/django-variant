@@ -13,7 +13,7 @@ setup(
     packages=[
         'variant', 'variant.migrations'],
     install_requires=[
-        'Django>=1.4'],
+        'Django>=1.5'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
