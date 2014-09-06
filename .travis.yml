@@ -1,8 +1,16 @@
 language: python
+python:
+    - "2.7"
+    - "3.3"
+    - "3.4"
 env:
     - TOXENV=django15
     - TOXENV=django16
-    - TOXENV=coverage
+    - TOXENV=django17
+matrix:
+    include:
+        - python: "2.7"
+          env: TOXENV=coverage
 install:
     - pip install tox
 script:
