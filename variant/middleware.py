@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
+import six
 
 from .utils import get_experiment_cookie_name
 
@@ -11,7 +12,7 @@ class VariantMiddleware(object):
         request.variant_experiments = {}
 
     def process_response(self, request, response):
-        for name, variant in request.variant_experiments.iteritems():
+        for name, variant in six.iteritems(request.variant_experiments):
             if variant:
                 cookie_name = get_experiment_cookie_name(name)
                 response.set_cookie(

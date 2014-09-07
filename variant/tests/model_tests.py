@@ -2,19 +2,19 @@
 from __future__ import unicode_literals
 
 from django.test import TestCase
-import mox
 
 from variant import models
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 
 class ExperimentModelTests(TestCase):
     def setUp(self):
         self.experiment = models.Experiment(
             name='test_1', variants='variant A\nvariant B \n variant C')
-        self.mock = mox.Mox()
-
-    def tearDown(self):
-        self.mock.UnsetStubs()
 
     def test_get_variants(self):
         variants = self.experiment.get_variants()
@@ -34,16 +34,16 @@ class ExperimentModelTests(TestCase):
             self.experiment._variant_cache,
             ['variant A', 'variant B', 'variant C', 'variant D'])
 
-    def test_choose_variants(self):
-        self.mock.StubOutWithMock(self.experiment, 'get_variants')
-        self.mock.StubOutWithMock(models.random, 'choice')
-        self.experiment.get_variants().AndReturn(
-            ['variant A', 'variant B', 'variant C'])
-        models.random.choice(
-            ['variant A', 'variant B', 'variant C']).AndReturn('variant B')
+    @mock.patch('variant.models.random')
+    @mock.patch('variant.models.Experiment.get_variants')
+    def test_choose_variants(self, mock_get_variants, mock_random):
+        mock_get_variants.return_value = [
+            'variant A', 'variant B', 'variant C']
+        mock_random.choice.return_value = 'variant B'
 
-        self.mock.ReplayAll()
         choice = self.experiment.choose_variant()
-        self.mock.VerifyAll()
 
+        self.experiment.get_variants.assert_called_once_with()
+        models.random.choice.assert_called_once_with(
+            ['variant A', 'variant B', 'variant C'])
         self.assertEqual(choice, 'variant B')

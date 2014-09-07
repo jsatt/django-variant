@@ -4,10 +4,14 @@ from __future__ import unicode_literals
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.test.client import RequestFactory
-import mox
 
 from variant import utils
 from variant.models import Experiment
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 
 class GetExperimentVariantTest(TestCase):
@@ -17,66 +21,72 @@ class GetExperimentVariantTest(TestCase):
         self.request = RequestFactory()
         self.request.variant_experiments = {}
         self.request.COOKIES = {}
-        self.mock = mox.Mox()
-        self.mock.StubOutWithMock(Experiment, 'get_variants')
-        self.mock.StubOutWithMock(Experiment, 'choose_variant')
-        self.mock.StubOutWithMock(utils, 'get_experiment_cookie_name')
+        self.choose_variant_patcher =  mock.patch(
+            'variant.models.Experiment.choose_variant')
+        self.get_variants_patcher =  mock.patch(
+            'variant.models.Experiment.get_variants')
+        self.get_cookie_name_patcher = mock.patch(
+            'variant.utils.get_experiment_cookie_name')
+        self.mock_choose_variant = self.choose_variant_patcher.start()
+        self.mock_get_variants = self.get_variants_patcher.start()
+        self.mock_get_cookie_name = self.get_cookie_name_patcher.start()
 
     def tearDown(self):
-        self.mock.UnsetStubs()
+        self.choose_variant_patcher.stop()
+        self.get_variants_patcher.stop()
+        self.get_cookie_name_patcher.stop()
 
     def test_first_visit(self):
-        utils.get_experiment_cookie_name('test_experiment').AndReturn(
-            'dvc_test_experiment')
-        Experiment.choose_variant().AndReturn('variant B')
+        self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
+        self.mock_choose_variant.return_value = 'variant B'
 
-        self.mock.ReplayAll()
         variant = utils.get_experiment_variant(self.request, 'test_experiment')
-        self.mock.VerifyAll()
 
+        self.mock_get_cookie_name.assert_called_once_with('test_experiment')
+        self.mock_choose_variant.assert_called_once_with()
         self.assertEqual(variant, 'variant B')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant B')
 
     def test_invalid_experiment(self):
-        self.mock.ReplayAll()
         variant = utils.get_experiment_variant(
             self.request, 'other_experiment')
-        self.mock.VerifyAll()
 
+        self.assertEqual(self.mock_choose_variant.call_count, 0)
+        self.assertEqual(self.mock_get_cookie_name.call_count, 0)
+        self.assertEqual(self.mock_get_variants.call_count, 0)
         self.assertIs(variant, None)
         self.assertIs(
             self.request.variant_experiments['other_experiment'], None)
 
     def test_cookie_set(self):
         self.request.COOKIES['dvc_test_experiment'] = 'variant A'
-        utils.get_experiment_cookie_name('test_experiment').AndReturn(
-            'dvc_test_experiment')
-        Experiment.get_variants().AndReturn(['variant A', 'variant B'])
+        self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
+        self.mock_get_variants.return_value = ['variant A', 'variant B']
 
-        self.mock.ReplayAll()
         with self.settings(VARIANT_SETTINGS={'EXPERIMENT_COOKIE': 'dvc_{}'}):
             variant = utils.get_experiment_variant(
                 self.request, 'test_experiment')
-        self.mock.VerifyAll()
 
+        self.mock_get_cookie_name.assert_called_once_with('test_experiment')
+        self.mock_get_variants.assert_called_once_with()
         self.assertEqual(variant, 'variant A')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant A')
 
     def test_cookie_set_invalid_variant(self):
         self.request.COOKIES['dvc_test_experiment'] = 'variant C'
-        utils.get_experiment_cookie_name('test_experiment').AndReturn(
-            'dvc_test_experiment')
-        Experiment.get_variants().AndReturn(['variant A', 'variant B'])
-        Experiment.choose_variant().AndReturn('variant A')
+        self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
+        self.mock_get_variants.return_value = ['variant A', 'variant B']
+        self.mock_choose_variant.return_value = 'variant A'
 
-        self.mock.ReplayAll()
         with self.settings(VARIANT_SETTINGS={'EXPERIMENT_COOKIE': 'dvc_{}'}):
             variant = utils.get_experiment_variant(
                 self.request, 'test_experiment')
-        self.mock.VerifyAll()
 
+        self.mock_get_cookie_name.assert_called_once_with('test_experiment')
+        self.mock_get_variants.assert_called_once_with()
+        self.mock_choose_variant.assert_called_once_with()
         self.assertEqual(variant, 'variant A')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant A')
@@ -84,37 +94,33 @@ class GetExperimentVariantTest(TestCase):
     def test_variant_cached(self):
         self.request.variant_experiments['test_experiment'] = 'variant A'
 
-        self.mock.ReplayAll()
         variant = utils.get_experiment_variant(self.request, 'test_experiment')
-        self.mock.VerifyAll()
 
+        self.assertEqual(self.mock_choose_variant.call_count, 0)
+        self.assertEqual(self.mock_get_cookie_name.call_count, 0)
+        self.assertEqual(self.mock_get_variants.call_count, 0)
         self.assertEqual(variant, 'variant A')
 
     def test_middleware_missing(self):
         delattr(self.request, 'variant_experiments')
 
-        self.mock.ReplayAll()
         self.assertRaisesMessage(
             ImproperlyConfigured,
             'VariantMiddleware must be enabled to use Variant experiments.',
             utils.get_experiment_variant, self.request, 'test_experiment')
-        self.mock.VerifyAll()
+
+        self.assertEqual(self.mock_choose_variant.call_count, 0)
+        self.assertEqual(self.mock_get_cookie_name.call_count, 0)
+        self.assertEqual(self.mock_get_variants.call_count, 0)
 
 
 class GetExperimentCookieNameTest(TestCase):
-    def setUp(self):
-        self.mock = mox.Mox()
+    @mock.patch('variant.utils.slugify')
+    def test_get_cookie_name(self, mock_slugify):
+        mock_slugify.return_value = 'dvc_experiment-1'
 
-    def tearDown(self):
-        self.mock.UnsetStubs()
-
-    def test_get_cookie_name(self):
-        self.mock.StubOutWithMock(utils, 'slugify')
-        utils.slugify('dvc_experiment 1').AndReturn('dvc_experiment-1')
-
-        self.mock.ReplayAll()
         with self.settings(VARIANT_EXPERIMENT_COOKIE='dvc_{}'):
             cookie_name = utils.get_experiment_cookie_name('experiment 1')
-        self.mock.VerifyAll()
 
+        mock_slugify.assert_called_once_with('dvc_experiment 1')
         self.assertEqual(cookie_name, 'dvc_experiment-1')

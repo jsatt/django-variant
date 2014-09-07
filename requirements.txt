@@ -1,7 +1,8 @@
 pip>=0.8.2
 South
 Django>=1.5
-mox
+six
+mock
 nose
 django-nose
 fabric
