@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
+
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.text import slugify
 
 from .models import Experiment
+
+logger = logging.getLogger(__name__)
 
 
 def get_experiment_variant(request, experiment_name, make_decision=True):
@@ -13,8 +16,9 @@ def get_experiment_variant(request, experiment_name, make_decision=True):
         if experiment_name in request.variant_experiments:
             return request.variant_experiments[experiment_name]
     except AttributeError:
-        raise ImproperlyConfigured(
-            'VariantMiddleware must be enabled to use Variant experiments.')
+        logger.warn('VariantMiddleware must be enabled for Variant experiments'
+                    ' to be persistent.')
+        request.variant_experiments = {}
 
     if not make_decision:
         return None

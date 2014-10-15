@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.test.client import RequestFactory
 
@@ -27,14 +26,17 @@ class GetExperimentVariantTest(TestCase):
             'variant.models.Experiment.get_variants')
         self.get_cookie_name_patcher = mock.patch(
             'variant.utils.get_experiment_cookie_name')
+        self.logger_patcher = mock.patch('variant.utils.logger')
         self.mock_choose_variant = self.choose_variant_patcher.start()
         self.mock_get_variants = self.get_variants_patcher.start()
         self.mock_get_cookie_name = self.get_cookie_name_patcher.start()
+        self.mock_logger = self.logger_patcher.start()
 
     def tearDown(self):
         self.choose_variant_patcher.stop()
         self.get_variants_patcher.stop()
         self.get_cookie_name_patcher.stop()
+        self.logger_patcher.stop()
 
     def test_first_visit(self):
         self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
@@ -43,7 +45,8 @@ class GetExperimentVariantTest(TestCase):
         variant = utils.get_experiment_variant(self.request, 'test_experiment')
 
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
-        self.mock_choose_variant.assert_called_once_with()
+        self.mock_get_variants.assert_called_once()
+        self.mock_choose_variant.assert_called_once()
         self.assertEqual(variant, 'variant B')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant B')
@@ -81,7 +84,7 @@ class GetExperimentVariantTest(TestCase):
                 self.request, 'test_experiment')
 
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
-        self.mock_get_variants.assert_called_once_with()
+        self.mock_get_variants.assert_called_once()
         self.assertEqual(variant, 'variant A')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant A')
@@ -97,8 +100,8 @@ class GetExperimentVariantTest(TestCase):
                 self.request, 'test_experiment')
 
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
-        self.mock_get_variants.assert_called_once_with()
-        self.mock_choose_variant.assert_called_once_with()
+        self.mock_get_variants.assert_called_once()
+        self.mock_choose_variant.assert_called_once()
         self.assertEqual(variant, 'variant A')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant A')
@@ -115,15 +118,20 @@ class GetExperimentVariantTest(TestCase):
 
     def test_middleware_missing(self):
         delattr(self.request, 'variant_experiments')
+        self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
+        self.mock_choose_variant.return_value = 'variant B'
 
-        self.assertRaisesMessage(
-            ImproperlyConfigured,
-            'VariantMiddleware must be enabled to use Variant experiments.',
-            utils.get_experiment_variant, self.request, 'test_experiment')
+        variant = utils.get_experiment_variant(self.request, 'test_experiment')
 
-        self.assertEqual(self.mock_choose_variant.call_count, 0)
-        self.assertEqual(self.mock_get_cookie_name.call_count, 0)
-        self.assertEqual(self.mock_get_variants.call_count, 0)
+        self.mock_logger.warn.assert_called_once_with(
+            'VariantMiddleware must be enabled for Variant experiments to be '
+            'persistent.')
+        self.mock_get_cookie_name.assert_called_once_with('test_experiment')
+        self.mock_get_variants.assert_called_once()
+        self.mock_choose_variant.assert_called_once()
+        self.assertEqual(variant, 'variant B')
+        self.assertEqual(
+            self.request.variant_experiments['test_experiment'], 'variant B')
 
 
 class GetExperimentCookieNameTest(TestCase):
