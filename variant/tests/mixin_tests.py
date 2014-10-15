@@ -14,6 +14,7 @@ class VariantTestMixinTest(TestCase):
 
     def test_init(self):
         self.assertEqual(self.view.variants, {})
+        self.assertIs(self.view.variants['dne'], None)
 
     def test_dispatch(self):
         request = mock.MagicMock()

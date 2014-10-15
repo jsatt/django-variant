@@ -1,3 +1,4 @@
+from collections import defaultdict
 from .utils import get_experiment_variant
 
 
@@ -6,7 +7,7 @@ class VariantTestMixin(object):
 
     def __init__(self, *args, **kwargs):
         super(VariantTestMixin, self).__init__(*args, **kwargs)
-        self.variants = {}
+        self.variants = defaultdict(lambda: None)
 
     def dispatch(self, request, *args, **kwargs):
         self.set_variants()
