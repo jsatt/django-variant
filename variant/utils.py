@@ -8,13 +8,16 @@ from django.utils.text import slugify
 from .models import Experiment
 
 
-def get_experiment_variant(request, experiment_name):
+def get_experiment_variant(request, experiment_name, make_decision=True):
     try:
         if experiment_name in request.variant_experiments:
             return request.variant_experiments[experiment_name]
     except AttributeError:
         raise ImproperlyConfigured(
             'VariantMiddleware must be enabled to use Variant experiments.')
+
+    if not make_decision:
+        return None
 
     try:
         experiment = Experiment.objects.get(name=experiment_name, active=True)

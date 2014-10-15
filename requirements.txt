@@ -6,3 +6,4 @@ mock
 nose
 django-nose
 fabric
+jinja2

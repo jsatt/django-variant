@@ -21,9 +21,9 @@ class GetExperimentVariantTest(TestCase):
         self.request = RequestFactory()
         self.request.variant_experiments = {}
         self.request.COOKIES = {}
-        self.choose_variant_patcher =  mock.patch(
+        self.choose_variant_patcher = mock.patch(
             'variant.models.Experiment.choose_variant')
-        self.get_variants_patcher =  mock.patch(
+        self.get_variants_patcher = mock.patch(
             'variant.models.Experiment.get_variants')
         self.get_cookie_name_patcher = mock.patch(
             'variant.utils.get_experiment_cookie_name')
@@ -47,6 +47,18 @@ class GetExperimentVariantTest(TestCase):
         self.assertEqual(variant, 'variant B')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant B')
+
+    def test_first_visit_dont_decide(self):
+        self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
+        self.mock_choose_variant.return_value = 'variant B'
+
+        variant = utils.get_experiment_variant(
+            self.request, 'test_experiment', make_decision=False)
+
+        self.assertEqual(self.mock_get_cookie_name.call_count, 0)
+        self.assertEqual(self.mock_choose_variant.call_count, 0)
+        self.assertEqual(variant, None)
+        self.assertNotIn('test_experiment', self.request.variant_experiments)
 
     def test_invalid_experiment(self):
         variant = utils.get_experiment_variant(
