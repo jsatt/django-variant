@@ -4,12 +4,12 @@ from setuptools import setup
 
 setup(
     name='django-variant',
-    version='0.0.1',
+    version='0.0.2',
     description='Django variant testing framework',
     author='Jeremy Sattefield',
     author_email='jsatt22@gmail.com',
     url='https://github.com/jsatt/django-variant',
-    #license='',
+    # license='',
     packages=[
         'variant', 'variant.migrations'],
     install_requires=[
