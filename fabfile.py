@@ -30,7 +30,8 @@ def test(test_case=''):
 
 
 def test_coverage():
-    _local('coverage run --source=%s --omit=*/migrations/*.py $(which django-admin.py) test' % APP_NAME)
+    _local('coverage run --source=%s --omit=*/migrations/*.py '
+           '$(which django-admin.py) test' % APP_NAME)
 
 
 def serve():

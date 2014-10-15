@@ -28,6 +28,7 @@ class VariantMiddlewareTests(TestCase):
             'experiment 1': 'variant a',
             'experiment 2': None,
             'experiment 3': 'other variant'}
+
         def mock_cookie_name_side_effect(key):
             if key == 'experiment 1':
                 return 'dvc_experiment-1'
