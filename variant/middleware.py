@@ -12,6 +12,9 @@ class VariantMiddleware(object):
         request.variant_experiments = {}
 
     def process_response(self, request, response):
+        if not hasattr(request, 'variant_experiments'):
+            return response
+
         for name, variant in six.iteritems(request.variant_experiments):
             if variant:
                 cookie_name = get_experiment_cookie_name(name)

@@ -21,6 +21,14 @@ class VariantMiddlewareTests(TestCase):
         self.middleware.process_request(request)
         self.assertDictEqual(request.variant_experiments, {})
 
+    def test_process_response_no_variant_experiment_on_request(self):
+        request = RequestFactory()
+
+        mock_response = mock.Mock()
+
+        response = self.middleware.process_response(request, mock_response)
+        self.assertEqual(response, mock_response)
+
     @mock.patch('variant.middleware.get_experiment_cookie_name')
     def test_process_response(self, mock_cookie_name):
         request = RequestFactory()
