@@ -3,12 +3,13 @@ Django Variant
 
 Variant is an AB/variant/split testing framework for Django which allows for easy setup and flexible goal tracking. Variant provides an optional basic goal tacking system for reviewing results, but also allows for simple use of Google Analytics custom variables, custom ad channels or most other reporting system you choose.
 
-[[travis badge]]
-[[coveralls badge]]
+[![Build Status](https://travis-ci.org/jsatt/django-variant.svg?branch=master)](https://travis-ci.org/jsatt/django-variant)
+[![Coverage Status](https://coveralls.io/repos/jsatt/django-variant/badge.png?branch=master)](https://coveralls.io/r/jsatt/django-variant?branch=master)
 
 Installing
 ----------
 
+    pip install django-variant
 
 Using Variant
 -------------
