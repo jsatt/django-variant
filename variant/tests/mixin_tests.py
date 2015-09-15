@@ -26,8 +26,8 @@ class VariantTestMixinTest(TestCase):
                     'set_variants') as set_variant_mock:
                 self.view.dispatch(request)
 
-        set_variant_mock.assertCalledOnce()
-        super_dispatch.assertCalledOnce()
+        set_variant_mock.assert_called_once_with()
+        super_dispatch.assert_called_once_with(request)
 
     def test_get_context_data(self):
         self.view.variants = {'test1': 'old', 'test2': 'new'}

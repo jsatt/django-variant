@@ -13,7 +13,7 @@ class ExperimentVariantTest(TestCase):
 
             variant = experiment_variant(context, 'experiment1')
 
-        get_var.assertCalledOnceWith(request, 'experiment1')
+        get_var.assert_called_once_with(request, 'experiment1', make_decision=False)
         self.assertEqual(variant, 'sample_variant')
 
     def test_get_variant_none(self):

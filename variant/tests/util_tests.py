@@ -45,8 +45,7 @@ class GetExperimentVariantTest(TestCase):
         variant = utils.get_experiment_variant(self.request, 'test_experiment')
 
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
-        self.mock_get_variants.assert_called_once()
-        self.mock_choose_variant.assert_called_once()
+        self.mock_choose_variant.assert_called_once_with()
         self.assertEqual(variant, 'variant B')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant B')
@@ -84,7 +83,7 @@ class GetExperimentVariantTest(TestCase):
                 self.request, 'test_experiment')
 
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
-        self.mock_get_variants.assert_called_once()
+        self.mock_get_variants.assert_called_once_with()
         self.assertEqual(variant, 'variant A')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant A')
@@ -100,8 +99,8 @@ class GetExperimentVariantTest(TestCase):
                 self.request, 'test_experiment')
 
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
-        self.mock_get_variants.assert_called_once()
-        self.mock_choose_variant.assert_called_once()
+        self.mock_get_variants.assert_called_once_with()
+        self.mock_choose_variant.assert_called_once_with()
         self.assertEqual(variant, 'variant A')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant A')
@@ -127,8 +126,7 @@ class GetExperimentVariantTest(TestCase):
             'VariantMiddleware must be enabled for Variant experiments to be '
             'persistent.')
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
-        self.mock_get_variants.assert_called_once()
-        self.mock_choose_variant.assert_called_once()
+        self.mock_choose_variant.assert_called_once_with()
         self.assertEqual(variant, 'variant B')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant B')
