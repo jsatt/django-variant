@@ -50,7 +50,7 @@ License
 -------
 
 Django Variant
-Copyright (C) 2014  Jeremy Satterfield
+Copyright (C) Jeremy Satterfield and individual contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
