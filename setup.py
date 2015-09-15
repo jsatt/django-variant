@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='django-variant',
-    version='0.1.0',
+    version='0.1.1',
     description='Django variant testing framework',
     author='Jeremy Sattefield',
     author_email='jsatt@jsatt.com',
